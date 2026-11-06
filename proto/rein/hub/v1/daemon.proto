@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package rein.hub.v1;
+
+import "rein/hub/v1/run.proto";
+
+option go_package = "github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1";
+
+service DaemonService {
+  // daemon 主动连接；第一帧 Hello，对账完成后才接收新执行。
+  rpc Connect(stream ConnectRequest) returns (stream ConnectResponse);
+}
+
+message StateEvent {
+  RunState state = 1;
+}
+message TextEvent {
+  string item_id = 1;
+  string text = 2;
+  bool complete = 3;
+  bool reasoning = 4;
+}
+message ToolEvent {
+  string call_id = 1;
+  string name = 2;
+  bytes input_json = 3;
+  bytes output_json = 4;
+  bool complete = 5;
+  bool is_error = 6;
+}
+message InteractionEvent {
+  string interaction_id = 1;
+  bool approval_required = 2;
+  string method = 3;
+  bytes parameters_json = 4;
+}
+message ErrorEvent {
+  string code = 1;
+  string message = 2;
+}
+message UsageEvent {
+  string model = 1;
+  uint64 input_tokens = 2;
+  uint64 output_tokens = 3;
+  uint64 cache_read_tokens = 4;
+  uint64 cache_write_tokens = 5;
+}
+message ResultEvent {
+  RunState state = 1;
+  string output = 2;
+  ExecutionRef execution = 3;
+  // cancelled 结果必须确认执行已停止；原生路径还须确认进程/工具清理。
+  bool execution_stopped = 4;
+}
+
+message ExecutionEvent {
+  AttemptRef attempt = 1;
+  // 作用域为 (run_id, attempt_id)，从 1 开始，跨重连/重启保持单调。
+  uint64 sequence = 2;
+  oneof payload {
+    StateEvent state = 3;
+    TextEvent text = 4;
+    ToolEvent tool = 5;
+    InteractionEvent interaction = 6;
+    ErrorEvent error = 7;
+    UsageEvent usage = 8;
+    ResultEvent result = 9;
+  }
+}
+
+message CancelCommand {
+  string reason = 1;
+}
+message InteractionReplyCommand {
+  string interaction_id = 1;
+  bytes response_json = 2;
+}
+message InstructionCommand {
+  string instruction = 1;
+}
+
+// 专属控制按 capability 检查和验证，不能将任意 JSON 当成审批授权。
+message BackendControlCommand {
+  string capability = 1;
+  string operation = 2;
+  bytes payload_json = 3;
+}
+message ControlCommand {
+  string command_id = 1;
+  AttemptRef attempt = 2;
+  oneof payload {
+    CancelCommand cancel = 3;
+    InteractionReplyCommand interaction_reply = 4;
+    InstructionCommand instruction = 5;
+    BackendControlCommand backend_control = 6;
+  }
+}
+
+enum CommandAckState {
+  COMMAND_ACK_STATE_UNSPECIFIED = 0;
+  COMMAND_ACK_STATE_RECEIVED = 1;
+  COMMAND_ACK_STATE_APPLIED = 2;
+  COMMAND_ACK_STATE_REJECTED = 3;
+}
+message CommandAck {
+  string command_id = 1;
+  AttemptRef attempt = 2;
+  CommandAckState state = 3;
+  string error_code = 4;
+}
+
+// Hub 在事件和状态事务提交后发送；累计确认连续序号，不能跨过空洞。
+message EventAck {
+  AttemptRef attempt = 1;
+  uint64 through_sequence = 2;
+}
+message AttemptCheckpoint {
+  AttemptRef attempt = 1;
+  uint64 last_acked_sequence = 2;
+  ExecutionRef execution = 3;
+}
+message Hello {
+  string daemon_id = 1;
+  repeated AttemptCheckpoint attempts = 2;
+  repeated CommandAck commands = 3;
+}
+message Heartbeat {
+  repeated string runtime_ids = 1;
+  uint32 available_capacity = 2;
+}
+message ReconcileRequest {
+  repeated AttemptCheckpoint attempts = 1;
+}
+message ReconcileResponse {
+  repeated Run runs = 1;
+  repeated EventAck event_acks = 2;
+  repeated ControlCommand pending_commands = 3;
+}
+message WorkAvailable {
+  repeated string runtime_ids = 1;
+}
+message ConnectRequest {
+  oneof payload {
+    Hello hello = 1;
+    Heartbeat heartbeat = 2;
+    ExecutionEvent event = 3;
+    CommandAck command_ack = 4;
+    ReconcileRequest reconcile = 5;
+  }
+}
+message ConnectResponse {
+  oneof payload {
+    WorkAvailable work_available = 1;
+    ControlCommand command = 2;
+    EventAck event_ack = 3;
+    ReconcileResponse reconcile = 4;
+  }
+}

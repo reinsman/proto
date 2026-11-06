@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package rein.hub.v1;
+
+option go_package = "github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1";
+
+// 登录由 daemon 发起。浏览器授权流程及凭据发行尚待实现。
+service AuthService {
+  rpc StartLogin(StartLoginRequest) returns (StartLoginResponse);
+  rpc GetLoginStatus(GetLoginStatusRequest) returns (GetLoginStatusResponse);
+}
+
+enum LoginState {
+  LOGIN_STATE_UNSPECIFIED = 0;
+  LOGIN_STATE_PENDING = 1;
+  LOGIN_STATE_AUTHENTICATED = 2;
+  LOGIN_STATE_EXPIRED = 3;
+  LOGIN_STATE_DENIED = 4;
+}
+
+message StartLoginRequest {
+  string daemon_id = 1;
+  string request_id = 2;
+  // daemon 生成的高熵随机值；查询时证明登录请求所有权，不写入日志。
+  bytes login_secret = 3;
+}
+
+message StartLoginResponse {
+  string login_id = 1;
+  string verification_uri = 2;
+  int64 expires_at_unix_seconds = 3;
+}
+
+message GetLoginStatusRequest {
+  string login_id = 1;
+  bytes login_secret = 2;
+}
+
+message GetLoginStatusResponse {
+  LoginState state = 1;
+  string user_id = 2;
+  // 仅成功认证后返回给所属 daemon；禁止传给 CLI、Agent 或日志。
+  string connection_credential = 3;
+  int64 credential_expires_at_unix_seconds = 4;
+}

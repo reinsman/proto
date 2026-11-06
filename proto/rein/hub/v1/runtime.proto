@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package rein.hub.v1;
+
+option go_package = "github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1";
+
+service RuntimeService {
+  rpc RegisterRuntime(RegisterRuntimeRequest) returns (RegisterRuntimeResponse);
+}
+
+enum BackendKind {
+  BACKEND_KIND_UNSPECIFIED = 0;
+  BACKEND_KIND_NATIVE = 1;
+  BACKEND_KIND_A2A = 2;
+}
+
+message Runtime {
+  string id = 1;
+  string daemon_id = 2;
+  string workspace_id = 3;
+  BackendKind backend = 4;
+  string provider = 5;
+  // 例如 native.codex.steer、native.pi.abort、a2a.streaming。
+  repeated string capabilities = 6;
+}
+
+message Agent {
+  string id = 1;
+  string name = 2;
+  string runtime_id = 3;
+  string instructions = 4;
+  string model = 5;
+  repeated string skill_ids = 6;
+}
+
+message RegisterRuntimeRequest {
+  string request_id = 1;
+  Runtime runtime = 2;
+}
+
+message RegisterRuntimeResponse {
+  Runtime runtime = 1;
+}

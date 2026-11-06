@@ -1,0 +1,3 @@
+[workspace]
+members = ["gen/rust/rein-proto", "tools/generate-rust"]
+resolver = "3"

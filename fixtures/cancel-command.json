@@ -1,0 +1,5 @@
+{
+  "commandId": "command-1",
+  "attempt": {"runId": "run-1", "attemptId": "attempt-1"},
+  "cancel": {"reason": "user requested"}
+}

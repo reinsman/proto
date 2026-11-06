@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package rein.hub.v1;
+
+import "rein/hub/v1/runtime.proto";
+
+option go_package = "github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1";
+
+service RunService {
+  rpc CreateRun(CreateRunRequest) returns (CreateRunResponse);
+  rpc ClaimRuns(ClaimRunsRequest) returns (ClaimRunsResponse);
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc RequestCancel(RequestCancelRequest) returns (RequestCancelResponse);
+  rpc ReplyInteraction(ReplyInteractionRequest) returns (ReplyInteractionResponse);
+  rpc SendInstruction(SendInstructionRequest) returns (SendInstructionResponse);
+}
+
+enum RunState {
+  RUN_STATE_UNSPECIFIED = 0;
+  RUN_STATE_QUEUED = 1;
+  RUN_STATE_DISPATCHED = 2;
+  RUN_STATE_RUNNING = 3;
+  RUN_STATE_WAITING_INPUT = 4;
+  RUN_STATE_WAITING_APPROVAL = 5;
+  RUN_STATE_COMPLETED = 6;
+  RUN_STATE_FAILED = 7;
+  RUN_STATE_CANCELLED = 8;
+}
+
+message AttemptRef {
+  string run_id = 1;
+  string attempt_id = 2;
+}
+
+message Session {
+  string id = 1;
+  string agent_id = 2;
+}
+
+// 原生文件路径和服务认证只保存在 daemon，本协议传递不含秘密的引用。
+message NativeExecutionRef {
+  string provider = 1;
+  string session_ref = 2;
+  string turn_id = 3;
+}
+
+message A2aExecutionRef {
+  string service_ref = 1;
+  string context_id = 2;
+  string task_id = 3;
+}
+
+message ExecutionRef {
+  oneof backend {
+    NativeExecutionRef native = 1;
+    A2aExecutionRef a2a = 2;
+  }
+}
+
+message Run {
+  string id = 1;
+  string workspace_id = 2;
+  string session_id = 3;
+  string agent_id = 4;
+  string runtime_id = 5;
+  RunState state = 6;
+  string attempt_id = 7;
+  bool cancel_requested = 8;
+  ExecutionRef execution = 9;
+}
+
+message RunLease {
+  Run run = 1;
+  Agent agent = 2;
+  string prompt = 3;
+  int64 expires_at_unix_seconds = 4;
+}
+
+message CreateRunRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  string agent_id = 3;
+  string session_id = 4;
+  string prompt = 5;
+}
+message CreateRunResponse {
+  Run run = 1;
+}
+
+message ClaimRunsRequest {
+  string request_id = 1;
+  string daemon_id = 2;
+  repeated string runtime_ids = 3;
+  uint32 capacity = 4;
+}
+message ClaimRunsResponse {
+  repeated RunLease leases = 1;
+}
+
+message GetRunRequest {
+  string run_id = 1;
+}
+message GetRunResponse {
+  Run run = 1;
+}
+
+message RequestCancelRequest {
+  AttemptRef attempt = 1;
+  string command_id = 2;
+  string reason = 3;
+}
+
+// receipt 只表示控制意图已持久化，不表示进程已停止。
+message RequestCancelResponse {
+  string command_id = 1;
+}
+
+message ReplyInteractionRequest {
+  AttemptRef attempt = 1;
+  string command_id = 2;
+  string interaction_id = 3;
+  bytes response_json = 4;
+}
+message ReplyInteractionResponse {
+  string command_id = 1;
+}
+
+message SendInstructionRequest {
+  AttemptRef attempt = 1;
+  string command_id = 2;
+  string instruction = 3;
+}
+message SendInstructionResponse {
+  string command_id = 1;
+}
