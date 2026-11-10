@@ -20,6 +20,9 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	RuntimeService_RegisterRuntime_FullMethodName = "/rein.hub.v1.RuntimeService/RegisterRuntime"
+	RuntimeService_RegisterAgent_FullMethodName   = "/rein.hub.v1.RuntimeService/RegisterAgent"
+	RuntimeService_UnregisterAgent_FullMethodName = "/rein.hub.v1.RuntimeService/UnregisterAgent"
+	RuntimeService_ListAgents_FullMethodName      = "/rein.hub.v1.RuntimeService/ListAgents"
 )
 
 // RuntimeServiceClient is the client API for RuntimeService service.
@@ -27,6 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RuntimeServiceClient interface {
 	RegisterRuntime(ctx context.Context, in *RegisterRuntimeRequest, opts ...grpc.CallOption) (*RegisterRuntimeResponse, error)
+	RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error)
+	UnregisterAgent(ctx context.Context, in *UnregisterAgentRequest, opts ...grpc.CallOption) (*UnregisterAgentResponse, error)
+	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error)
 }
 
 type runtimeServiceClient struct {
@@ -47,11 +53,44 @@ func (c *runtimeServiceClient) RegisterRuntime(ctx context.Context, in *Register
 	return out, nil
 }
 
+func (c *runtimeServiceClient) RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterAgentResponse)
+	err := c.cc.Invoke(ctx, RuntimeService_RegisterAgent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeServiceClient) UnregisterAgent(ctx context.Context, in *UnregisterAgentRequest, opts ...grpc.CallOption) (*UnregisterAgentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnregisterAgentResponse)
+	err := c.cc.Invoke(ctx, RuntimeService_UnregisterAgent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeServiceClient) ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAgentsResponse)
+	err := c.cc.Invoke(ctx, RuntimeService_ListAgents_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RuntimeServiceServer is the server API for RuntimeService service.
 // All implementations must embed UnimplementedRuntimeServiceServer
 // for forward compatibility.
 type RuntimeServiceServer interface {
 	RegisterRuntime(context.Context, *RegisterRuntimeRequest) (*RegisterRuntimeResponse, error)
+	RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error)
+	UnregisterAgent(context.Context, *UnregisterAgentRequest) (*UnregisterAgentResponse, error)
+	ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error)
 	mustEmbedUnimplementedRuntimeServiceServer()
 }
 
@@ -64,6 +103,15 @@ type UnimplementedRuntimeServiceServer struct{}
 
 func (UnimplementedRuntimeServiceServer) RegisterRuntime(context.Context, *RegisterRuntimeRequest) (*RegisterRuntimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRuntime not implemented")
+}
+func (UnimplementedRuntimeServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+}
+func (UnimplementedRuntimeServiceServer) UnregisterAgent(context.Context, *UnregisterAgentRequest) (*UnregisterAgentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnregisterAgent not implemented")
+}
+func (UnimplementedRuntimeServiceServer) ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAgents not implemented")
 }
 func (UnimplementedRuntimeServiceServer) mustEmbedUnimplementedRuntimeServiceServer() {}
 func (UnimplementedRuntimeServiceServer) testEmbeddedByValue()                        {}
@@ -104,6 +152,60 @@ func _RuntimeService_RegisterRuntime_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RuntimeService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterAgentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServiceServer).RegisterAgent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuntimeService_RegisterAgent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuntimeService_UnregisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnregisterAgentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServiceServer).UnregisterAgent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuntimeService_UnregisterAgent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServiceServer).UnregisterAgent(ctx, req.(*UnregisterAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuntimeService_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAgentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServiceServer).ListAgents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuntimeService_ListAgents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServiceServer).ListAgents(ctx, req.(*ListAgentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RuntimeService_ServiceDesc is the grpc.ServiceDesc for RuntimeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +216,18 @@ var RuntimeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterRuntime",
 			Handler:    _RuntimeService_RegisterRuntime_Handler,
+		},
+		{
+			MethodName: "RegisterAgent",
+			Handler:    _RuntimeService_RegisterAgent_Handler,
+		},
+		{
+			MethodName: "UnregisterAgent",
+			Handler:    _RuntimeService_UnregisterAgent_Handler,
+		},
+		{
+			MethodName: "ListAgents",
+			Handler:    _RuntimeService_ListAgents_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

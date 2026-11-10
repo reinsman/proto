@@ -156,13 +156,15 @@ func (x *Runtime) GetCapabilities() []string {
 }
 
 type Agent struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	RuntimeId     string                 `protobuf:"bytes,3,opt,name=runtime_id,json=runtimeId,proto3" json:"runtime_id,omitempty"`
-	Instructions  string                 `protobuf:"bytes,4,opt,name=instructions,proto3" json:"instructions,omitempty"`
-	Model         string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
-	SkillIds      []string               `protobuf:"bytes,6,rep,name=skill_ids,json=skillIds,proto3" json:"skill_ids,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	RuntimeId    string                 `protobuf:"bytes,3,opt,name=runtime_id,json=runtimeId,proto3" json:"runtime_id,omitempty"`
+	Instructions string                 `protobuf:"bytes,4,opt,name=instructions,proto3" json:"instructions,omitempty"`
+	Model        string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
+	SkillIds     []string               `protobuf:"bytes,6,rep,name=skill_ids,json=skillIds,proto3" json:"skill_ids,omitempty"`
+	// Hub 管理的下线标记；保留列表、描述与执行历史，但不再调度。
+	Disabled      bool `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -237,6 +239,13 @@ func (x *Agent) GetSkillIds() []string {
 		return x.SkillIds
 	}
 	return nil
+}
+
+func (x *Agent) GetDisabled() bool {
+	if x != nil {
+		return x.Disabled
+	}
+	return false
 }
 
 type RegisterRuntimeRequest struct {
@@ -335,6 +344,355 @@ func (x *RegisterRuntimeResponse) GetRuntime() *Runtime {
 	return nil
 }
 
+// 运行配置和原生/A2A 凭据留在 daemon，Hub 只保存可调度的 Agent 描述。
+type RegisterAgentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	DaemonId      string                 `protobuf:"bytes,2,opt,name=daemon_id,json=daemonId,proto3" json:"daemon_id,omitempty"`
+	Agent         *Agent                 `protobuf:"bytes,3,opt,name=agent,proto3" json:"agent,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterAgentRequest) Reset() {
+	*x = RegisterAgentRequest{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterAgentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterAgentRequest) ProtoMessage() {}
+
+func (x *RegisterAgentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterAgentRequest.ProtoReflect.Descriptor instead.
+func (*RegisterAgentRequest) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RegisterAgentRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *RegisterAgentRequest) GetDaemonId() string {
+	if x != nil {
+		return x.DaemonId
+	}
+	return ""
+}
+
+func (x *RegisterAgentRequest) GetAgent() *Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return nil
+}
+
+type RegisterAgentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agent         *Agent                 `protobuf:"bytes,1,opt,name=agent,proto3" json:"agent,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterAgentResponse) Reset() {
+	*x = RegisterAgentResponse{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterAgentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterAgentResponse) ProtoMessage() {}
+
+func (x *RegisterAgentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterAgentResponse.ProtoReflect.Descriptor instead.
+func (*RegisterAgentResponse) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RegisterAgentResponse) GetAgent() *Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return nil
+}
+
+type UnregisterAgentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	DaemonId      string                 `protobuf:"bytes,2,opt,name=daemon_id,json=daemonId,proto3" json:"daemon_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,3,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnregisterAgentRequest) Reset() {
+	*x = UnregisterAgentRequest{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnregisterAgentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnregisterAgentRequest) ProtoMessage() {}
+
+func (x *UnregisterAgentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnregisterAgentRequest.ProtoReflect.Descriptor instead.
+func (*UnregisterAgentRequest) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UnregisterAgentRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *UnregisterAgentRequest) GetDaemonId() string {
+	if x != nil {
+		return x.DaemonId
+	}
+	return ""
+}
+
+func (x *UnregisterAgentRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+type UnregisterAgentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnregisterAgentResponse) Reset() {
+	*x = UnregisterAgentResponse{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnregisterAgentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnregisterAgentResponse) ProtoMessage() {}
+
+func (x *UnregisterAgentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnregisterAgentResponse.ProtoReflect.Descriptor instead.
+func (*UnregisterAgentResponse) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UnregisterAgentResponse) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+type AgentInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agent         *Agent                 `protobuf:"bytes,1,opt,name=agent,proto3" json:"agent,omitempty"`
+	Runtime       *Runtime               `protobuf:"bytes,2,opt,name=runtime,proto3" json:"runtime,omitempty"`
+	Online        bool                   `protobuf:"varint,3,opt,name=online,proto3" json:"online,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentInfo) Reset() {
+	*x = AgentInfo{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentInfo) ProtoMessage() {}
+
+func (x *AgentInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentInfo.ProtoReflect.Descriptor instead.
+func (*AgentInfo) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AgentInfo) GetAgent() *Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return nil
+}
+
+func (x *AgentInfo) GetRuntime() *Runtime {
+	if x != nil {
+		return x.Runtime
+	}
+	return nil
+}
+
+func (x *AgentInfo) GetOnline() bool {
+	if x != nil {
+		return x.Online
+	}
+	return false
+}
+
+type ListAgentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentsRequest) Reset() {
+	*x = ListAgentsRequest{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentsRequest) ProtoMessage() {}
+
+func (x *ListAgentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentsRequest.ProtoReflect.Descriptor instead.
+func (*ListAgentsRequest) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{9}
+}
+
+type ListAgentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agents        []*AgentInfo           `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentsResponse) Reset() {
+	*x = ListAgentsResponse{}
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentsResponse) ProtoMessage() {}
+
+func (x *ListAgentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rein_hub_v1_runtime_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentsResponse.ProtoReflect.Descriptor instead.
+func (*ListAgentsResponse) Descriptor() ([]byte, []int) {
+	return file_rein_hub_v1_runtime_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListAgentsResponse) GetAgents() []*AgentInfo {
+	if x != nil {
+		return x.Agents
+	}
+	return nil
+}
+
 var File_rein_hub_v1_runtime_proto protoreflect.FileDescriptor
 
 const file_rein_hub_v1_runtime_proto_rawDesc = "" +
@@ -346,7 +704,7 @@ const file_rein_hub_v1_runtime_proto_rawDesc = "" +
 	"\fworkspace_id\x18\x03 \x01(\tR\vworkspaceId\x122\n" +
 	"\abackend\x18\x04 \x01(\x0e2\x18.rein.hub.v1.BackendKindR\abackend\x12\x1a\n" +
 	"\bprovider\x18\x05 \x01(\tR\bprovider\x12\"\n" +
-	"\fcapabilities\x18\x06 \x03(\tR\fcapabilities\"\xa1\x01\n" +
+	"\fcapabilities\x18\x06 \x03(\tR\fcapabilities\"\xbd\x01\n" +
 	"\x05Agent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
@@ -354,19 +712,45 @@ const file_rein_hub_v1_runtime_proto_rawDesc = "" +
 	"runtime_id\x18\x03 \x01(\tR\truntimeId\x12\"\n" +
 	"\finstructions\x18\x04 \x01(\tR\finstructions\x12\x14\n" +
 	"\x05model\x18\x05 \x01(\tR\x05model\x12\x1b\n" +
-	"\tskill_ids\x18\x06 \x03(\tR\bskillIds\"g\n" +
+	"\tskill_ids\x18\x06 \x03(\tR\bskillIds\x12\x1a\n" +
+	"\bdisabled\x18\a \x01(\bR\bdisabled\"g\n" +
 	"\x16RegisterRuntimeRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12.\n" +
 	"\aruntime\x18\x02 \x01(\v2\x14.rein.hub.v1.RuntimeR\aruntime\"I\n" +
 	"\x17RegisterRuntimeResponse\x12.\n" +
-	"\aruntime\x18\x01 \x01(\v2\x14.rein.hub.v1.RuntimeR\aruntime*Z\n" +
+	"\aruntime\x18\x01 \x01(\v2\x14.rein.hub.v1.RuntimeR\aruntime\"|\n" +
+	"\x14RegisterAgentRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1b\n" +
+	"\tdaemon_id\x18\x02 \x01(\tR\bdaemonId\x12(\n" +
+	"\x05agent\x18\x03 \x01(\v2\x12.rein.hub.v1.AgentR\x05agent\"A\n" +
+	"\x15RegisterAgentResponse\x12(\n" +
+	"\x05agent\x18\x01 \x01(\v2\x12.rein.hub.v1.AgentR\x05agent\"o\n" +
+	"\x16UnregisterAgentRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1b\n" +
+	"\tdaemon_id\x18\x02 \x01(\tR\bdaemonId\x12\x19\n" +
+	"\bagent_id\x18\x03 \x01(\tR\aagentId\"4\n" +
+	"\x17UnregisterAgentResponse\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\"}\n" +
+	"\tAgentInfo\x12(\n" +
+	"\x05agent\x18\x01 \x01(\v2\x12.rein.hub.v1.AgentR\x05agent\x12.\n" +
+	"\aruntime\x18\x02 \x01(\v2\x14.rein.hub.v1.RuntimeR\aruntime\x12\x16\n" +
+	"\x06online\x18\x03 \x01(\bR\x06online\"\x13\n" +
+	"\x11ListAgentsRequest\"D\n" +
+	"\x12ListAgentsResponse\x12.\n" +
+	"\x06agents\x18\x01 \x03(\v2\x16.rein.hub.v1.AgentInfoR\x06agents*Z\n" +
 	"\vBackendKind\x12\x1c\n" +
 	"\x18BACKEND_KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13BACKEND_KIND_NATIVE\x10\x01\x12\x14\n" +
-	"\x10BACKEND_KIND_A2A\x10\x022n\n" +
+	"\x10BACKEND_KIND_A2A\x10\x022\xf3\x02\n" +
 	"\x0eRuntimeService\x12\\\n" +
-	"\x0fRegisterRuntime\x12#.rein.hub.v1.RegisterRuntimeRequest\x1a$.rein.hub.v1.RegisterRuntimeResponseB4Z2github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1b\x06proto3"
+	"\x0fRegisterRuntime\x12#.rein.hub.v1.RegisterRuntimeRequest\x1a$.rein.hub.v1.RegisterRuntimeResponse\x12V\n" +
+	"\rRegisterAgent\x12!.rein.hub.v1.RegisterAgentRequest\x1a\".rein.hub.v1.RegisterAgentResponse\x12\\\n" +
+	"\x0fUnregisterAgent\x12#.rein.hub.v1.UnregisterAgentRequest\x1a$.rein.hub.v1.UnregisterAgentResponse\x12M\n" +
+	"\n" +
+	"ListAgents\x12\x1e.rein.hub.v1.ListAgentsRequest\x1a\x1f.rein.hub.v1.ListAgentsResponseB4Z2github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1b\x06proto3"
 
 var (
 	file_rein_hub_v1_runtime_proto_rawDescOnce sync.Once
@@ -381,25 +765,43 @@ func file_rein_hub_v1_runtime_proto_rawDescGZIP() []byte {
 }
 
 var file_rein_hub_v1_runtime_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_rein_hub_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_rein_hub_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_rein_hub_v1_runtime_proto_goTypes = []any{
 	(BackendKind)(0),                // 0: rein.hub.v1.BackendKind
 	(*Runtime)(nil),                 // 1: rein.hub.v1.Runtime
 	(*Agent)(nil),                   // 2: rein.hub.v1.Agent
 	(*RegisterRuntimeRequest)(nil),  // 3: rein.hub.v1.RegisterRuntimeRequest
 	(*RegisterRuntimeResponse)(nil), // 4: rein.hub.v1.RegisterRuntimeResponse
+	(*RegisterAgentRequest)(nil),    // 5: rein.hub.v1.RegisterAgentRequest
+	(*RegisterAgentResponse)(nil),   // 6: rein.hub.v1.RegisterAgentResponse
+	(*UnregisterAgentRequest)(nil),  // 7: rein.hub.v1.UnregisterAgentRequest
+	(*UnregisterAgentResponse)(nil), // 8: rein.hub.v1.UnregisterAgentResponse
+	(*AgentInfo)(nil),               // 9: rein.hub.v1.AgentInfo
+	(*ListAgentsRequest)(nil),       // 10: rein.hub.v1.ListAgentsRequest
+	(*ListAgentsResponse)(nil),      // 11: rein.hub.v1.ListAgentsResponse
 }
 var file_rein_hub_v1_runtime_proto_depIdxs = []int32{
-	0, // 0: rein.hub.v1.Runtime.backend:type_name -> rein.hub.v1.BackendKind
-	1, // 1: rein.hub.v1.RegisterRuntimeRequest.runtime:type_name -> rein.hub.v1.Runtime
-	1, // 2: rein.hub.v1.RegisterRuntimeResponse.runtime:type_name -> rein.hub.v1.Runtime
-	3, // 3: rein.hub.v1.RuntimeService.RegisterRuntime:input_type -> rein.hub.v1.RegisterRuntimeRequest
-	4, // 4: rein.hub.v1.RuntimeService.RegisterRuntime:output_type -> rein.hub.v1.RegisterRuntimeResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0,  // 0: rein.hub.v1.Runtime.backend:type_name -> rein.hub.v1.BackendKind
+	1,  // 1: rein.hub.v1.RegisterRuntimeRequest.runtime:type_name -> rein.hub.v1.Runtime
+	1,  // 2: rein.hub.v1.RegisterRuntimeResponse.runtime:type_name -> rein.hub.v1.Runtime
+	2,  // 3: rein.hub.v1.RegisterAgentRequest.agent:type_name -> rein.hub.v1.Agent
+	2,  // 4: rein.hub.v1.RegisterAgentResponse.agent:type_name -> rein.hub.v1.Agent
+	2,  // 5: rein.hub.v1.AgentInfo.agent:type_name -> rein.hub.v1.Agent
+	1,  // 6: rein.hub.v1.AgentInfo.runtime:type_name -> rein.hub.v1.Runtime
+	9,  // 7: rein.hub.v1.ListAgentsResponse.agents:type_name -> rein.hub.v1.AgentInfo
+	3,  // 8: rein.hub.v1.RuntimeService.RegisterRuntime:input_type -> rein.hub.v1.RegisterRuntimeRequest
+	5,  // 9: rein.hub.v1.RuntimeService.RegisterAgent:input_type -> rein.hub.v1.RegisterAgentRequest
+	7,  // 10: rein.hub.v1.RuntimeService.UnregisterAgent:input_type -> rein.hub.v1.UnregisterAgentRequest
+	10, // 11: rein.hub.v1.RuntimeService.ListAgents:input_type -> rein.hub.v1.ListAgentsRequest
+	4,  // 12: rein.hub.v1.RuntimeService.RegisterRuntime:output_type -> rein.hub.v1.RegisterRuntimeResponse
+	6,  // 13: rein.hub.v1.RuntimeService.RegisterAgent:output_type -> rein.hub.v1.RegisterAgentResponse
+	8,  // 14: rein.hub.v1.RuntimeService.UnregisterAgent:output_type -> rein.hub.v1.UnregisterAgentResponse
+	11, // 15: rein.hub.v1.RuntimeService.ListAgents:output_type -> rein.hub.v1.ListAgentsResponse
+	12, // [12:16] is the sub-list for method output_type
+	8,  // [8:12] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_rein_hub_v1_runtime_proto_init() }
@@ -413,7 +815,7 @@ func file_rein_hub_v1_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rein_hub_v1_runtime_proto_rawDesc), len(file_rein_hub_v1_runtime_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

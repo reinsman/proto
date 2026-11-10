@@ -16,13 +16,16 @@
 ## 普通 RPC 与流
 
 - AuthService：StartLogin/GetLoginStatus。
-- RuntimeService：RegisterRuntime；RunService：CreateRun/ClaimRuns/GetRun 及控制意图 RPC。
+- RuntimeService：RegisterRuntime / RegisterAgent / UnregisterAgent / ListAgents；RunService：CreateRun/ClaimRuns/GetRun 及控制意图 RPC。
 - DaemonService.Connect 由 daemon 主动建立。第一帧 Hello，附带本地 attempt 检查点与未完成命令确认；Hub 返回 ReconcileResponse，完成对账后才能领取和继续执行。
 - WorkAvailable 只是提示；daemon 根据本地空闲容量调用 ClaimRuns。心跳维持连接可见性，不作为某个 Run 已完成的依据。
 - 断线退避重连，重新 Hello/对账；定时 GetRun 可补偿通知丢失。流发送和接收不能互相阻塞。短 RPC 必须有 deadline；长流按心跳/空闲策略检测连接，不套用执行总时限。
 - 本地 IPC 保持有界短请求；登录和长执行通过后台任务与查询分离。
 
 ## Run、Attempt 与状态
+
+- CLI 使用 up/down 表达 Agent 上下线。RegisterAgent 上线或更新配置；UnregisterAgent 校验 daemon 所有权后设置 Agent.disabled，不删除描述、Runtime、会话或 Run 历史。列表保留已下线 Agent，online=false；CreateRun 和 ClaimRuns 拒绝调度。queued、执行中及等待交互的 Run 均阻止下线，检查与停用必须原子完成。
+- UnregisterAgent 的 request_id 绑定 daemon、Agent 和请求内容，持久化幂等；旧请求重试不得撤销后续明确的上线。daemon 先保存下线意图，再请求 Hub；暂时失败、响应丢失或重启后复用同一 request_id，确认前不报告成功、不重新发布该 Agent。明确拒绝后恢复本地启用状态。再次 up 同名 Agent 保留 ID，裸 up 使用保存配置。
 
 ```
 queued → dispatched → running → completed / failed / cancelled
@@ -62,4 +65,8 @@ queued → dispatched → running → completed / failed / cancelled
 - v1 包内只做兼容增加，删除字段须 reserved，禁止复用 field number；破坏性变更使用新版本包。
 - 生成器版本固定于工具脚本和 Cargo.lock；生成产物只能通过生成器修改。CI 重生成比较内容，并对 PR 基线执行 Buf FILE breaking 检查。
 - 开发允许 Go replace / Cargo path；发布必须引用固定协议版本，并移除本地路径依赖。
-- 本轮只交付协议与可编译骨架：实际登录、授权、数据库事务、租约、持久化队列和 Backend 执行均需后续实现与端到端验证。
+- 当前为本机免登录执行闭环：CLI 注册，Hub REST + gRPC/TLS，Native/A2A，Console 与 SQLite outbox。Hub 的 ACK 表示原子快照 fsync/rename 和状态更新已完成；当前使用单进程文件存储；后续 Hub 重构时接入认证授权与事务数据库。
+- 当前 Hub 仅绑定 loopback，不区分开发/生产模式；原生路径、A2A 服务地址及其凭据仍由 daemon 管理。浏览器不通过 IPC 或原生管道直接调用 Agent。
+- A2A v1 JSON-RPC 当前使用 GetTask 轮询和完整快照事件，Task/context 单独保存；原生 delta 与快照语义保持独立。支持标准 InputRequired 文本和服务声明的 a2alinker 结构化交互扩展。
+- 收到 A2A 控制回复的传输错误时保留 delivery_unknown 回执，禁止自动重复投递；以 Task 后续查询确认状态。
+- 生产认证、权限、凭据续期、数据库迁移、高级控制及未知执行人工恢复流程仍需实现。

@@ -6,6 +6,9 @@ option go_package = "github.com/reinsman/proto/gen/go/rein/hub/v1;hubv1";
 
 service RuntimeService {
   rpc RegisterRuntime(RegisterRuntimeRequest) returns (RegisterRuntimeResponse);
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+  rpc UnregisterAgent(UnregisterAgentRequest) returns (UnregisterAgentResponse);
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
 }
 
 enum BackendKind {
@@ -31,6 +34,8 @@ message Agent {
   string instructions = 4;
   string model = 5;
   repeated string skill_ids = 6;
+  // Hub 管理的下线标记；保留列表、描述与执行历史，但不再调度。
+  bool disabled = 7;
 }
 
 message RegisterRuntimeRequest {
@@ -40,4 +45,31 @@ message RegisterRuntimeRequest {
 
 message RegisterRuntimeResponse {
   Runtime runtime = 1;
+}
+
+// 运行配置和原生/A2A 凭据留在 daemon，Hub 只保存可调度的 Agent 描述。
+message RegisterAgentRequest {
+  string request_id = 1;
+  string daemon_id = 2;
+  Agent agent = 3;
+}
+message RegisterAgentResponse {
+  Agent agent = 1;
+}
+message UnregisterAgentRequest {
+  string request_id = 1;
+  string daemon_id = 2;
+  string agent_id = 3;
+}
+message UnregisterAgentResponse {
+  string agent_id = 1;
+}
+message AgentInfo {
+  Agent agent = 1;
+  Runtime runtime = 2;
+  bool online = 3;
+}
+message ListAgentsRequest {}
+message ListAgentsResponse {
+  repeated AgentInfo agents = 1;
 }

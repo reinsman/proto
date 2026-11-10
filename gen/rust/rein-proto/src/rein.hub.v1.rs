@@ -468,6 +468,9 @@ pub struct Agent {
     pub model: ::prost::alloc::string::String,
     #[prost(string, repeated, tag = "6")]
     pub skill_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Hub 管理的下线标记；保留列表、描述与执行历史，但不再调度。
+    #[prost(bool, tag = "7")]
+    pub disabled: bool,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RegisterRuntimeRequest {
@@ -480,6 +483,51 @@ pub struct RegisterRuntimeRequest {
 pub struct RegisterRuntimeResponse {
     #[prost(message, optional, tag = "1")]
     pub runtime: ::core::option::Option<Runtime>,
+}
+/// 运行配置和原生/A2A 凭据留在 daemon，Hub 只保存可调度的 Agent 描述。
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterAgentRequest {
+    #[prost(string, tag = "1")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub daemon_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub agent: ::core::option::Option<Agent>,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterAgentResponse {
+    #[prost(message, optional, tag = "1")]
+    pub agent: ::core::option::Option<Agent>,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct UnregisterAgentRequest {
+    #[prost(string, tag = "1")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub daemon_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub agent_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct UnregisterAgentResponse {
+    #[prost(string, tag = "1")]
+    pub agent_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct AgentInfo {
+    #[prost(message, optional, tag = "1")]
+    pub agent: ::core::option::Option<Agent>,
+    #[prost(message, optional, tag = "2")]
+    pub runtime: ::core::option::Option<Runtime>,
+    #[prost(bool, tag = "3")]
+    pub online: bool,
+}
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ListAgentsRequest {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAgentsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub agents: ::prost::alloc::vec::Vec<AgentInfo>,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -616,6 +664,80 @@ pub mod runtime_service_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        pub async fn register_agent(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterAgentRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::RegisterAgentResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/rein.hub.v1.RuntimeService/RegisterAgent",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("rein.hub.v1.RuntimeService", "RegisterAgent"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn unregister_agent(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UnregisterAgentRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UnregisterAgentResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/rein.hub.v1.RuntimeService/UnregisterAgent",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("rein.hub.v1.RuntimeService", "UnregisterAgent"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn list_agents(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAgentsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListAgentsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/rein.hub.v1.RuntimeService/ListAgents",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("rein.hub.v1.RuntimeService", "ListAgents"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -636,6 +758,27 @@ pub mod runtime_service_server {
             request: tonic::Request<super::RegisterRuntimeRequest>,
         ) -> std::result::Result<
             tonic::Response<super::RegisterRuntimeResponse>,
+            tonic::Status,
+        >;
+        async fn register_agent(
+            &self,
+            request: tonic::Request<super::RegisterAgentRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::RegisterAgentResponse>,
+            tonic::Status,
+        >;
+        async fn unregister_agent(
+            &self,
+            request: tonic::Request<super::UnregisterAgentRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UnregisterAgentResponse>,
+            tonic::Status,
+        >;
+        async fn list_agents(
+            &self,
+            request: tonic::Request<super::ListAgentsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListAgentsResponse>,
             tonic::Status,
         >;
     }
@@ -746,6 +889,142 @@ pub mod runtime_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = RegisterRuntimeSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rein.hub.v1.RuntimeService/RegisterAgent" => {
+                    #[allow(non_camel_case_types)]
+                    struct RegisterAgentSvc<T: RuntimeService>(pub Arc<T>);
+                    impl<
+                        T: RuntimeService,
+                    > tonic::server::UnaryService<super::RegisterAgentRequest>
+                    for RegisterAgentSvc<T> {
+                        type Response = super::RegisterAgentResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterAgentRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RuntimeService>::register_agent(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = RegisterAgentSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rein.hub.v1.RuntimeService/UnregisterAgent" => {
+                    #[allow(non_camel_case_types)]
+                    struct UnregisterAgentSvc<T: RuntimeService>(pub Arc<T>);
+                    impl<
+                        T: RuntimeService,
+                    > tonic::server::UnaryService<super::UnregisterAgentRequest>
+                    for UnregisterAgentSvc<T> {
+                        type Response = super::UnregisterAgentResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UnregisterAgentRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RuntimeService>::unregister_agent(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = UnregisterAgentSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rein.hub.v1.RuntimeService/ListAgents" => {
+                    #[allow(non_camel_case_types)]
+                    struct ListAgentsSvc<T: RuntimeService>(pub Arc<T>);
+                    impl<
+                        T: RuntimeService,
+                    > tonic::server::UnaryService<super::ListAgentsRequest>
+                    for ListAgentsSvc<T> {
+                        type Response = super::ListAgentsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ListAgentsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RuntimeService>::list_agents(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ListAgentsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
